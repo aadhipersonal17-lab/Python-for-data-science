@@ -1,0 +1,206 @@
+# ==========================================
+# SALES DATA ANALYSIS FOR A RETAIL STORE
+# ==========================================
+
+# Import Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# ------------------------------------------
+# LOAD DATASET
+# ------------------------------------------
+
+# Replace with your CSV file path
+df = pd.read_csv("retail_sales.csv")
+
+# Display first 5 rows
+print("FIRST 5 RECORDS")
+print(df.head())
+
+# ------------------------------------------
+# DATA CLEANING
+# ------------------------------------------
+
+# Check null values
+print("\nNULL VALUES")
+print(df.isnull().sum())
+
+# Fill missing category values
+df['Category'].fillna('Uncategorized', inplace=True)
+
+# Remove rows with missing Transaction ID
+df.dropna(subset=['Transaction_ID'], inplace=True)
+
+# Remove zero sales rows
+df = df[df['Sale_Amount'] > 0]
+
+# Convert date column to datetime
+df['Sale_Date'] = pd.to_datetime(df['Sale_Date'])
+
+# Extract Month and Day
+df['Month'] = df['Sale_Date'].dt.month_name()
+df['Day'] = df['Sale_Date'].dt.day_name()
+
+# ------------------------------------------
+# BASIC STATISTICS
+# ------------------------------------------
+
+print("\nDATASET INFORMATION")
+print(df.info())
+
+print("\nSTATISTICAL SUMMARY")
+print(df.describe())
+
+# Total Revenue
+total_revenue = df['Sale_Amount'].sum()
+print("\nTOTAL REVENUE =", total_revenue)
+
+# Average Sale
+avg_sale = df['Sale_Amount'].mean()
+print("AVERAGE SALE =", avg_sale)
+
+# Median Sale
+median_sale = df['Sale_Amount'].median()
+print("MEDIAN SALE =", median_sale)
+
+# ------------------------------------------
+# TOP PRODUCT CATEGORIES
+# ------------------------------------------
+
+category_sales = df.groupby('Category')['Sale_Amount'].sum().sort_values(ascending=False)
+
+print("\nCATEGORY SALES")
+print(category_sales)
+
+# ------------------------------------------
+# MONTHLY SALES ANALYSIS
+# ------------------------------------------
+
+monthly_sales = df.groupby(df['Sale_Date'].dt.month)['Sale_Amount'].sum()
+
+# ------------------------------------------
+# VISUALIZATION 1 - MONTHLY SALES TREND
+# ------------------------------------------
+
+plt.figure(figsize=(10,5))
+monthly_sales.plot(kind='line', marker='o')
+
+plt.title("Monthly Sales Trend")
+plt.xlabel("Month")
+plt.ylabel("Revenue")
+plt.grid(True)
+
+plt.show()
+
+# ------------------------------------------
+# VISUALIZATION 2 - CATEGORY SALES
+# ------------------------------------------
+
+plt.figure(figsize=(8,5))
+
+sns.barplot(
+    x=category_sales.index,
+    y=category_sales.values
+)
+
+plt.title("Sales by Product Category")
+plt.xlabel("Category")
+plt.ylabel("Revenue")
+
+plt.xticks(rotation=45)
+
+plt.show()
+
+# ------------------------------------------
+# PAYMENT METHOD ANALYSIS
+# ------------------------------------------
+
+payment_analysis = df.groupby('Payment_Method')['Sale_Amount'].sum()
+
+print("\nPAYMENT METHOD ANALYSIS")
+print(payment_analysis)
+
+# Pie Chart
+plt.figure(figsize=(7,7))
+
+plt.pie(
+    payment_analysis.values,
+    labels=payment_analysis.index,
+    autopct='%1.1f%%'
+)
+
+plt.title("Payment Method Distribution")
+
+plt.show()
+
+# ------------------------------------------
+# REGION-WISE SALES
+# ------------------------------------------
+
+region_sales = df.groupby('Region')['Sale_Amount'].sum()
+
+print("\nREGION SALES")
+print(region_sales)
+
+# ------------------------------------------
+# HEATMAP ANALYSIS
+# ------------------------------------------
+
+pivot_table = df.pivot_table(
+    values='Sale_Amount',
+    index='Region',
+    columns='Category',
+    aggfunc='sum'
+)
+
+plt.figure(figsize=(10,6))
+
+sns.heatmap(
+    pivot_table,
+    annot=True,
+    fmt=".0f",
+    cmap="YlGnBu"
+)
+
+plt.title("Regional Sales Heatmap")
+
+plt.show()
+
+# ------------------------------------------
+# OUTLIER DETECTION
+# ------------------------------------------
+
+mean = df['Sale_Amount'].mean()
+std = df['Sale_Amount'].std()
+
+outliers = df[
+    df['Sale_Amount'] > (mean + 3 * std)
+]
+
+print("\nOUTLIER TRANSACTIONS")
+print(outliers)
+
+# ------------------------------------------
+# TOP 10 PRODUCTS
+# ------------------------------------------
+
+top_products = df.groupby('Product_Name')['Sale_Amount'].sum() \
+                 .sort_values(ascending=False) \
+                 .head(10)
+
+print("\nTOP 10 PRODUCTS")
+print(top_products)
+
+# ------------------------------------------
+# SAVE CLEANED DATA
+# ------------------------------------------
+
+df.to_csv("cleaned_retail_sales.csv", index=False)
+
+print("\nCLEANED DATA SAVED SUCCESSFULLY")
+
+# ==========================================
+# END OF PROJECT
+# ==========================================
